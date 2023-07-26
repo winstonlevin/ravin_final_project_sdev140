@@ -6,6 +6,7 @@ DAYS_PER_YEAR = 365.
 MONTHS_PER_YEAR = 12
 TERM_DEFAULT = '[Select a Term]'
 TKINTER_WINDOW = Union[tk.Tk, tk.Toplevel]
+EMPTY_DISPLAY = ''
 
 
 # DEFINE FUNCTIONS -----------------------------------------------------------------------------------------------------
@@ -38,23 +39,49 @@ def generate_validated_swapper(open_window: TKINTER_WINDOW, closed_window: TKINT
     return swap_after_validation
 
 
-def calculate_cd(principle: float, rate: float, term: float) -> (float, float):
+def generate_exit_program(root):
+    def exit_program():
+        root.destroy()
+    return exit_program
+
+
+def calculate_cd(principal: float, rate: float, term: float) -> (float, float):
     """
     This function returns average monthly dividend and total amount at end of term.
 
-    :param principle: float, the starting capital, dollars
+    :param principal: float, the starting capital, dollars
     :param rate: float, the annual interest rate, fraction
     :param term: float, the term, months
     :return: (float, float), a Tuple of the mean monthly return and total at end of term
     """
 
-    total = principle * (1 + rate / DAYS_PER_YEAR) ** (term * DAYS_PER_YEAR / MONTHS_PER_YEAR)
-    mean_return = (total - principle) / term
+    total = principal * (1 + rate / DAYS_PER_YEAR) ** (term * DAYS_PER_YEAR / MONTHS_PER_YEAR)
+    mean_return = (total - principal) / term
 
     return mean_return, total
 
 
-# DEFINE WINDOW CLASS --------------------------------------------------------------------------------------------------
+def generate_entry_calculator(cd_options, cd_selection, principal_entry, dividends_display, total_display):
+    def calculate_cd_from_entry():
+        selection = cd_selection.get()
+
+        try:
+            principal = float(principal_entry.get())
+            rate, term = cd_options[selection]
+            mean_return, total = calculate_cd(principal, rate, term)
+
+            dividends_display['text'] = f'${mean_return:.2f}'
+            total_display['text'] = f'${total:.2f}'
+
+        except RuntimeError:
+            dividends_display['text'] = EMPTY_DISPLAY
+            total_display['text'] = EMPTY_DISPLAY
+            print('Invalid Entry!')
+
+    return calculate_cd_from_entry
+
+
+# DEFINE WINDOW CLASSES ------------------------------------------------------------------------------------------------
 class RootWindow(tk.Tk):
     def __init__(
             self, title: Optional[str] = None, images: Optional[list[str]] = None,
@@ -99,7 +126,7 @@ window_selection = RootWindow(
     title="Certificate of Deposit Calculator", images=['bank_image.png'], image_shrink=4
 )
 
-window_calculation = Window(window_selection, title='Calculate CD Gains', images=['cd_image.png'])
+window_calculation = Window(window_selection, title='Calculate CD Gains', images=['cd_image.png'], image_shrink=2)
 window_calculation.withdraw()  # Not open by default
 
 # BUILD FIRST WINDOW (TERM SELECTION) ----------------------------------------------------------------------------------
@@ -133,10 +160,58 @@ button_to_calculation = tk.Button(
 button_to_calculation.grid(row=50, sticky='e')
 
 # BUILD SECOND WINDOW (CALCULATION) ------------------------------------------------------------------------------------
+
+# Left-most frame: Entry for CD principle
+frame_principal = tk.Frame(window_calculation)
+frame_principal.grid(row=0, column=0, columnspan=15, rowspan=50, sticky='w')
+
+label_principal = tk.Label(frame_principal, text=f'Principal to\nbe invested:')
+label_principal.grid(row=0, column=0, columnspan=1, sticky='w')
+
+entry_principal = tk.Entry(frame_principal, width=10)
+entry_principal.grid(row=10, column=0, columnspan=10, sticky='w')
+
+# Right-most frame: Display for CD calculations
+frame_display = tk.Frame(window_calculation)
+frame_display.grid(row=0, column=50, columnspan=1, sticky='e')
+
+label_total = tk.Label(frame_display, text='Average dividends per month:\n')
+label_total.grid(row=0, column=50, columnspan=1, sticky='ne')
+
+display_total = tk.Label(frame_display, text=EMPTY_DISPLAY)
+display_total.grid(row=12, column=50, sticky='ne')
+
+label_dividends = tk.Label(frame_display, text='Total Capital at End of Term:\n')
+label_dividends.grid(row=24, column=50, sticky='e')
+
+display_dividends = tk.Label(frame_display, text=EMPTY_DISPLAY)
+display_dividends.grid(row=24, column=50, sticky='e')
+
+# Middle frame: Calculation button
+frame_calculate = tk.Frame(window_calculation)
+frame_calculate.grid(row=0, column=15, columnspan=15, rowspan=50)
+
+button_to_calculate = tk.Button(
+    frame_calculate, text='Calculate', command=generate_entry_calculator(
+        cd_options, term_selection, entry_principal, display_dividends, display_total
+    )
+)
+button_to_calculate.grid(row=0, column=0, sticky='n')
+
+label_cd_graphic = tk.Label(master=frame_calculate, image=window_calculation.images[0])
+label_cd_graphic.grid(row=40, column=15, sticky='s')
+
+# Button to go back to selection window and choose a different term
 button_to_selection = tk.Button(
     window_calculation, text='Back', command=generate_swapper(window_calculation, window_selection)
 )
-button_to_selection.grid()
+button_to_selection.grid(row=50, column=0, sticky='w')
+
+# Button to exit
+button_to_exit = tk.Button(
+    window_calculation, text='Exit', command=generate_exit_program(window_selection)
+)
+button_to_exit.grid(row=50, column=50, sticky='e')
 
 
 # Display Image
