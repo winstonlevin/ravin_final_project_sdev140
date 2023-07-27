@@ -6,7 +6,7 @@ DAYS_PER_YEAR = 365.
 MONTHS_PER_YEAR = 12
 TERM_DEFAULT = '[Select a Term]'
 TKINTER_WINDOW = Union[tk.Tk, tk.Toplevel]
-EMPTY_DISPLAY = ''
+EMPTY_DISPLAY = '$        '
 
 
 # DEFINE FUNCTIONS -----------------------------------------------------------------------------------------------------
@@ -72,11 +72,9 @@ def generate_entry_calculator(cd_options, cd_selection, principal_entry, dividen
 
             dividends_display['text'] = f'${mean_return:.2f}'
             total_display['text'] = f'${total:.2f}'
-
         except RuntimeError:
             dividends_display['text'] = EMPTY_DISPLAY
             total_display['text'] = EMPTY_DISPLAY
-            print('Invalid Entry!')
 
     return calculate_cd_from_entry
 
@@ -127,10 +125,9 @@ window_selection = RootWindow(
 )
 
 window_calculation = Window(window_selection, title='Calculate CD Gains', images=['cd_image.png'], image_shrink=2)
-window_calculation.withdraw()  # Not open by default
+# window_calculation.withdraw()  # Not open by default
 
 # BUILD FIRST WINDOW (TERM SELECTION) ----------------------------------------------------------------------------------
-window_selection.resizable(width=True, height=True)
 
 # Create Frame for 1st Window
 label_term = tk.Label(master=window_selection, text="Select a term for your CD.", font=("Helvetica", 18))
@@ -163,7 +160,7 @@ button_to_calculation.grid(row=50, sticky='e')
 
 # Left-most frame: Entry for CD principle
 frame_principal = tk.Frame(window_calculation)
-frame_principal.grid(row=0, column=0, columnspan=15, rowspan=50, sticky='w')
+frame_principal.grid(row=0, column=0, columnspan=15, rowspan=50, sticky='w', padx=15, pady=5)
 
 label_principal = tk.Label(frame_principal, text=f'Principal to\nbe invested:')
 label_principal.grid(row=0, column=0, columnspan=1, sticky='w')
@@ -173,23 +170,31 @@ entry_principal.grid(row=10, column=0, columnspan=10, sticky='w')
 
 # Right-most frame: Display for CD calculations
 frame_display = tk.Frame(window_calculation)
-frame_display.grid(row=0, column=50, columnspan=1, sticky='e')
+frame_display.grid(row=0, column=50, rowspan=50, columnspan=1, sticky='e', padx=15, pady=5)
 
-label_total = tk.Label(frame_display, text='Average dividends per month:\n')
-label_total.grid(row=0, column=50, columnspan=1, sticky='ne')
+# Sub-frame for total
+frame_total = tk.Frame(frame_display)
+frame_display.grid(row=0, padx=5, pady=5, sticky='n')
 
-display_total = tk.Label(frame_display, text=EMPTY_DISPLAY)
-display_total.grid(row=12, column=50, sticky='ne')
+label_total = tk.Label(frame_total, text='Total Capital at End of Term:\n')
+label_total.grid(row=0, column=0, padx=5, pady=5)
 
-label_dividends = tk.Label(frame_display, text='Total Capital at End of Term:\n')
-label_dividends.grid(row=24, column=50, sticky='e')
+display_total = tk.Label(frame_total, text=EMPTY_DISPLAY)
+display_total.grid(row=5, column=0)
 
-display_dividends = tk.Label(frame_display, text=EMPTY_DISPLAY)
-display_dividends.grid(row=24, column=50, sticky='e')
+# Sub-frame for average dividends
+frame_dividends = tk.Frame(frame_display)
+frame_dividends.grid(row=50, padx=5, pady=5, sticky='s')
+
+label_dividends = tk.Label(frame_dividends, text='Average dividends per month:\n')
+label_dividends.grid(row=50, column=0, padx=5, pady=5)
+
+display_dividends = tk.Label(frame_dividends, text=EMPTY_DISPLAY)
+display_dividends.grid(row=55, column=0)
 
 # Middle frame: Calculation button
 frame_calculate = tk.Frame(window_calculation)
-frame_calculate.grid(row=0, column=15, columnspan=15, rowspan=50)
+frame_calculate.grid(row=0, column=15, columnspan=15, rowspan=50, padx=15, pady=5)
 
 button_to_calculate = tk.Button(
     frame_calculate, text='Calculate', command=generate_entry_calculator(
@@ -199,7 +204,7 @@ button_to_calculate = tk.Button(
 button_to_calculate.grid(row=0, column=0, sticky='n')
 
 label_cd_graphic = tk.Label(master=frame_calculate, image=window_calculation.images[0])
-label_cd_graphic.grid(row=40, column=15, sticky='s')
+label_cd_graphic.grid(row=40, column=0, sticky='s')
 
 # Button to go back to selection window and choose a different term
 button_to_selection = tk.Button(
